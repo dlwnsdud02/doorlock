@@ -1,0 +1,72 @@
+# Python cache / build output
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# IDE / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Codex / local agent workspace files
+.codex/
+.codex_tmp/
+.agents/
+
+# Logs and runtime files
+*.log
+logs/
+instance/
+
+# Embedded project generated/private data
+Embedded Project/Capture/
+Embedded Project/reference.jpg
+Embedded Project/reference.png
+
+# AI model weights / export artifacts
+Embedded Project/*.pt
+Embedded Project/*.onnx
+Embedded Project/*.engine
+Embedded Project/*.tflite
+Embedded Project/*.h5
+Embedded Project/*.pb
+Embedded Project/*.weights
+runs/
+wandb/
+
+# Local archive artifacts
+*.7z
+*.rar
+*.hwp
+*.hwpx
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+~$*
