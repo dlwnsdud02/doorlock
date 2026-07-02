@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YOLO Face Lock</title>
+
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    /* ===== 상태 배지 ===== */
+    .status-badge {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 30px;
+      border-radius: 6px;
+      font-size: 20px;
+      font-weight: bold;
+      z-index: 9999;
+    }
+    .LOCKED { background-color: #c0392b; color: #fff; }
+    .OPEN   { background-color: #27ae60; color: #fff; }
+
+    /* ===== 영상 ===== */
+    .video-wrapper {
+      position: relative;
+      border: 3px solid #333;
+      display: inline-block;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      margin-top: 20px;
+    }
+
+    img {
+      width: 100%;
+      display: block;
+    }
+
+    /* ===== 버튼 ===== */
+    .top-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    input[type="button"] {
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #1e1e1e;
+      color: #e0e0e0;
+    }
+
+    input[type="button"]:hover {
+      background: #2a2a2a;
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #aaa;
+    }
+
+    /* ===== 로그 ===== */
+    .log-box {
+      background: #1e1e1e;
+      height: 160px;
+      overflow-y: auto;
+      text-align: left;
+      padding: 10px;
+      border: 1px solid #333;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #aaa;
+    }
+
+    .log-success { color: #2ecc71; font-weight: bold; }
+    .log-fail    { color: #e74c3c; }
+
+    /* ===== 키패드 ===== */
+    .keypad {
+      display: none;
+      width: 260px;
+      margin: 20px auto 0;
+      padding: 15px;
+      border-radius: 10px;
+      background: #171717;
+      border: 1px solid #333;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+    }
+
+    .keypad-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+
+    .pin-display {
+      flex: 1;
+      padding: 8px 12px;
+      background: #101010;
+      border-radius: 8px;
+      border: 1px solid #333;
+      letter-spacing: 2px;
+      text-align: left;
+    }
+
+    .keypad-header button {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #1e1e1e;
+      color: #e0e0e0;
+      cursor: pointer;
+    }
+
+    .keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .keypad button.key {
+      padding: 15px;
+      font-size: 18px;
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #1e1e1e;
+      color: #e0e0e0;
+      cursor: pointer;
+    }
+
+    .keypad button.key:hover { background: #2a2a2a; }
+    .action-clear  { color: #ffb3b3; }
+    .action-submit { color: #b7ffcf; }
+  </style>
+</head>
+
+<body>
+
+  <div id="status-display" class="status-badge LOCKED">LOCKED</div>
+
+  <div class="container">
+    <h1>🔐 YOLO Security System</h1>
+
+    <div class="video-wrapper">
+      <img src="{{ url_for('video_feed') }}">
+    </div>
+
+    <div class="top-buttons">
+      <input type="button" value="도어락 열기 (원격)" id="btn-lock">
+      <input type="button" value="카메라 촬영" id="btn-capture">
+      <input type="button" value="키패드" id="btn-keypad">
+    </div>
+
+    <div class="hint">키패드: 숫자 → * 초기화 → # 확인</div>
+
+    <div class="log-box" id="log-container">시스템 대기중...</div>
+
+    <div class="keypad" id="keypad">
+      <div class="keypad-header">
+        <div class="pin-display" id="pin-display">PIN:</div>
+        <button onclick="toggleKeypad()">닫기</button>
+      </div>
+
+      <div class="keypad-grid">
+        <button class="key" onclick="pressKey('1')">1</button>
+        <button class="key" onclick="pressKey('2')">2</button>
+        <button class="key" onclick="pressKey('3')">3</button>
+        <button class="key" onclick="pressKey('4')">4</button>
+        <button class="key" onclick="pressKey('5')">5</button>
+        <button class="key" onclick="pressKey('6')">6</button>
+        <button class="key" onclick="pressKey('7')">7</button>
+        <button class="key" onclick="pressKey('8')">8</button>
+        <button class="key" onclick="pressKey('9')">9</button>
+        <button class="key action-clear" onclick="clearInput()">*</button>
+        <button class="key" onclick="pressKey('0')">0</button>
+        <button class="key action-submit" onclick="submitInput()">#</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  /* =========================================
+     [1] 서버 상태 모니터링
+     ========================================= */
+  setInterval(() => {
+    fetch('/get_status')
+      .then(r => r.json())
+      .then(data => {
+        const badge = document.getElementById('status-display');
+        
+        // 상태 텍스트: 문이 잠겨있는데 인증 중이면 "DETECTING..." 표시
+        if (data.status === 'LOCKED' && data.auth_active) {
+            badge.innerText = "🔍 인 식 중...";
+            badge.style.backgroundColor = "#e67e22"; // 주황색
+        } else {
+            badge.innerText = data.status;
+            badge.className = 'status-badge ' + data.status;
+            badge.style.backgroundColor = ""; // 클래스 스타일 복귀
+        }
+
+        const log = document.getElementById('log-container');
+        log.innerHTML = data.logs.slice().reverse().map(l => {
+          let c = '';
+          if (l.includes('성공') || l.includes('OPEN') || l.includes('개방')) c = 'log-success';
+          else if (l.includes('실패') || l.includes('초과')) c = 'log-fail';
+          return `<div class="${c}">${l}</div>`;
+        }).join('');
+      })
+      .catch(e => console.error(e));
+  }, 500);
+
+  /* =========================================
+     [2] 버튼 동작 연결
+     ========================================= */
+  
+  // 1. 도어락 버튼 -> [변경됨] "얼굴 인식 시작" 요청 (/request_auth)
+  document.getElementById('btn-lock').onclick = function() {
+    console.log("인식 요청 전송");
+    fetch('/request_auth')
+      .then(r => r.json())
+      .then(data => {
+        if(data.result === 'started') {
+            console.log("인식 시작됨 (비프음 발생)");
+        } else if (data.result === 'already_open') {
+            alert("이미 문이 열려있습니다.");
+        }
+      });
+  };
+
+  // 2. 카메라 촬영 (학습용)
+  document.getElementById('btn-capture').onclick = function() {
+    fetch('/trigger_capture');
+  };
+
+  /* =========================================
+     [3] 키패드 로직 (비상용 강제 개방)
+     ========================================= */
+  let inputBuffer = '';
+  const PASSWORD = '1234';
+
+  function requestUnlock(reason) {
+    fetch(`/force_unlock?reason=${encodeURIComponent(reason)}`);
+  }
+
+  function toggleKeypad() {
+    const k = document.getElementById('keypad');
+    k.style.display = (k.style.display === 'block') ? 'none' : 'block';
+    inputBuffer = '';
+    updatePin();
+  }
+
+  function pressKey(k) {
+    if (inputBuffer.length >= 4) return;
+    inputBuffer += k;
+    updatePin();
+  }
+
+  function clearInput() {
+    inputBuffer = '';
+    updatePin();
+  }
+
+  function submitInput() {
+    if (inputBuffer === PASSWORD) {
+      requestUnlock("웹 키패드 인증 성공");
+      clearInput();
+      toggleKeypad();
+    } else {
+      alert("비밀번호 불일치");
+      inputBuffer = '';
+      updatePin();
+    }
+  }
+
+  function updatePin() {
+    document.getElementById('pin-display').innerText = 'PIN: ' + '*'.repeat(inputBuffer.length);
+  }
+
+  document.getElementById('btn-keypad').onclick = toggleKeypad;
+</script>
+
+</body>
+</html>
