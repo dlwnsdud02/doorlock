@@ -6,7 +6,7 @@
 
 ## Demo
 
-- 시연 영상: [Demo.mp4](./Demo.mp4)
+- 시연 영상: https://www.youtube.com/watch?v=cE46y3rbjK8
 - 최종 보고서: [임베디드 보고서_001_7조_최종보고서.pdf](<./임베디드 보고서_001_7조_최종보고서.pdf>)
 
 ![시스템 흐름도](./assets/system-flow.jpg)
